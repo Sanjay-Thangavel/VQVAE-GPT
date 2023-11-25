@@ -43,7 +43,7 @@ class CnnEncoder(hk.Module):
         print("out_channel:",self.out_channels)   #128
         print("downscale layer:",self.downscale_level)   #3
         print("res_layers:",self.res_layers)   #2
-        print("Kernerl size":self.kernel_size)   #5
+        print("Kernerl size",self.kernel_size)   #5
 
         for i in range(self.downscale_level - 1, -1, -1):
             num_channels = self.out_channels // (2**i)
