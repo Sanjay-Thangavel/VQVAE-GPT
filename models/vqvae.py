@@ -39,6 +39,12 @@ class CnnEncoder(hk.Module):
         self.kernel_size = kernel_size
 
     def __call__(self, x, is_training: bool) -> jnp.ndarray:
+        print(self.out_channels)
+        print(self.downscale_level)
+        print("res_layers:")
+        print(self.res_layers)
+        print(self.kernel_size)
+
         for i in range(self.downscale_level - 1, -1, -1):
             num_channels = self.out_channels // (2**i)
             x = hk.Conv2D(num_channels, self.kernel_size, stride=2)(x)
