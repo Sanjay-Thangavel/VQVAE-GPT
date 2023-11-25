@@ -39,11 +39,11 @@ class CnnEncoder(hk.Module):
         self.kernel_size = kernel_size
 
     def __call__(self, x, is_training: bool) -> jnp.ndarray:
-        print(self.out_channels)
-        print(self.downscale_level)
-        print("res_layers:")
-        print(self.res_layers)
-        print(self.kernel_size)
+        print("======= CNN ENCODER ======= ")
+        print("out_channel:",self.out_channels)   #128
+        print("downscale layer:",self.downscale_level)   #3
+        print("res_layers:",self.res_layers)   #2
+        print("Kernerl size":self.kernel_size)   #5
 
         for i in range(self.downscale_level - 1, -1, -1):
             num_channels = self.out_channels // (2**i)
@@ -52,6 +52,7 @@ class CnnEncoder(hk.Module):
             x = nn.relu(x)
             for _ in range(self.res_layers):
                 x = ResBlock(num_channels, self.kernel_size)(x, is_training)
+            print("CNN Encoder Output : ",x)
         return x
 
 
@@ -71,6 +72,9 @@ class CnnDecoder(hk.Module):
         self.kernel_size = kernel_size
 
     def __call__(self, x: jnp.ndarray, is_training: bool) -> jnp.ndarray:
+        print("======= CNN DECODER ======= ")
+        print("Input Channel :",self.in_channels)
+        print("upscale level :",self.upscale_level)
         for i in range(self.upscale_level - 1):
             num_channels = self.in_channels // (2**i)
             x = hk.Conv2DTranspose(num_channels, self.kernel_size, stride=2)(x)
@@ -80,6 +84,7 @@ class CnnDecoder(hk.Module):
                 x = ResBlock(num_channels, self.kernel_size)(x, is_training)
         x = hk.Conv2DTranspose(1, self.kernel_size, stride=2)(x)
         x = nn.sigmoid(x)
+        print("CNN DECODER OUTPUT : ",x)
         return x
 
 
@@ -100,6 +105,13 @@ class QuantizedCodebook(hk.Module):
         self.codebook = hk.get_parameter("codebook", (self.K, self.D), init=initializer)
 
     def __call__(self, inputs) -> dict[str, jnp.ndarray]:
+
+        print("======== CODE BOOK QUANTIZER ======== ")
+        print("k_: ",self.K)
+        print("D_:",self.D)
+        print("Codebook :",self.codebook)
+        print("Input shape : ",inputs)
+
         """Connects the module to some inputs.
 
         Args:
@@ -118,29 +130,35 @@ class QuantizedCodebook(hk.Module):
         # input shape A1 x ... x An x D
         # shape N x D, N = A1 * ... * An
         flattened = jnp.reshape(inputs, (-1, self.D))
-
+        print("flattend: ",flattened)
         # shape N x 1
         flattened_sqr = jnp.sum(flattened**2, axis=-1, keepdims=True)
-
+        print("flattend sqr : ",flattened_sqr)
         # shape 1 x K
         codeboook_sqr = jnp.sum(self.codebook**2, axis=-1, keepdims=True).T
 
+        print("codebook_sqr:",codeboook_sqr)
         # shape N x K
         # distances = (a-b)^2 = a^2 - 2*a*b + b^2
         distances = flattened_sqr - 2 * (flattened @ self.codebook.T) + codeboook_sqr
 
+        print("distace: ",distances)
         # shape A1 x ... x An
         encoding_indices = jnp.reshape(
             jnp.argmin(distances, axis=-1), inputs.shape[:-1]
         )
 
+        print("Encoding indices",encoding_indices)
         # shape A1 x ... x An x D
         quantize = self.codebook[encoding_indices]
 
+        print("quantize: ",quantize)
         # loss = ||sg[z_e(x)] - e|| + beta||z_e(x) - sg[e]||
         encoding_loss = jnp.mean((jax.lax.stop_gradient(inputs) - quantize) ** 2)
         commit_loss = jnp.mean((inputs - jax.lax.stop_gradient(quantize)) ** 2)
         loss = encoding_loss + self.beta * commit_loss
+
+        print("codebook loss: ",loss)
 
         # straight-through estimator for reconstruction loss
         quantize = inputs + jax.lax.stop_gradient(quantize - inputs)
