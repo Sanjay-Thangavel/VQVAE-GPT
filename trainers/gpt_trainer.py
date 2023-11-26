@@ -58,6 +58,7 @@ class VqVaeGPTTrainer:
             net = GPTLmHeadModel(
                 num_heads, hidden_dim, num_layers, num_classes, dropout_rate, seq_length
             )
+            print("===== TOKENS ===== : ",net(tokens) )
             return net(tokens, is_training)
 
         return hk.transform_with_state(init)
@@ -79,10 +80,11 @@ class VqVaeGPTTrainer:
         vqvae_tokens = vqvae_tokens.reshape((vqvae_tokens.shape[0], -1))
         # offset encoding indices
         vqvae_tokens += self.num_label_classes
-
+        print("\n VQVAE tokens : ",vqvae_tokens)
         # add labels as additional tokens
         # tokens shape B x (1 + W * H)
         tokens = jnp.concatenate((labels, vqvae_tokens), axis=-1)
+        print("\n tokens: ",tokens)
         return tokens
 
     def forward(
@@ -144,8 +146,9 @@ class VqVaeGPTTrainer:
                 gpt_state.params, gpt_state.state, None, tokens, False
             )
             probs = (y_pred[0, i, :] / temp)[self.num_label_classes :]
+            print("before softmax: ",probs)
             probs = nn.softmax(probs)
-
+            print("After softmax: ",probs)
             vqvae_tokens = jnp.arange(
                 self.num_label_classes, self.num_classes, dtype=jnp.int32
             )

@@ -74,15 +74,15 @@ def main(path: str, out_path: str, batch_size: int, percentage: int):
         z_e, _ = trainer.apply.encode(params, state, None, x, is_training=False)
         result, _ = trainer.apply.quantize(params, state, None, z_e)
         indices = result["encoding_indices"]
-        print("\n ====== VQ VAE - ENCODE ============== \n")
-        print("result: ",result)
-        print("indices : ",indices)
+        #print("\n ====== VQ VAE - ENCODE ============== \n")
+        #print("result: ",result)
+        #print("indices : ",indices)
         # z1, z2 are not necessary but used for assertion
         z1 = trainer.lookup_indices(vqvae_state, indices)
         z2 = result["quantize"]
 
-        print("z1 : ",z1)
-        print("z2: ",z2)
+        #print("z1 : ",z1)
+        #print("z2: ",z2)
 
         return result, (z1, z2)
 

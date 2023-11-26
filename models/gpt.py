@@ -9,18 +9,18 @@ class CasualSelfAttention(hk.MultiHeadAttention):
     def __call__(self, x: jnp.ndarray) -> jnp.ndarray:
         # x is B x N x H
 
-        print("====== CASUAL SELF ATTENTION ====== ")
-        print("x is B x N x H :",x)
+        #print("====== CASUAL SELF ATTENTION ====== ")
+        #print("x is B x N x H :",x)
 
         seq_len = x.shape[1]
         casual_mask = jnp.tril(jnp.ones((seq_len, seq_len)))
 
         # mask is B x num_heads x N x N
-        print("mask is B x num_heads x N x N: ",casual_mask)
+       # print("mask is B x num_heads x N x N: ",casual_mask)
         casual_mask = jnp.tile(casual_mask, (x.shape[0], self.num_heads, 1, 1))
 
-        print("mask_1 : ",casual_mask)
-        print("MultiheadAttention : ",super().__call__(x, x, x, casual_mask))
+        #print("mask_1 : ",casual_mask)
+        #print("MultiheadAttention : ",super().__call__(x, x, x, casual_mask))
         return super().__call__(x, x, x, casual_mask)
 
 
