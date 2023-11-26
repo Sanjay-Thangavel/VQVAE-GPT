@@ -91,18 +91,11 @@ class VqVaeTrainer:
         return VqVaeState(params, state, opt_state)
 
     def forward(self, params: hk.Params, state: hk.State, x, is_training: bool):
-        print("======== FORWARD IN VQVAE TRAINER ===== ")
         z_e, state = self.apply.encode(params, state, None, x, is_training)
-        print("z_e : ",z_e)
-
         result, state = self.apply.quantize(params, state, None, z_e)
         z_q = result["quantize"]
-
-        print("z_q:",z_q)
         x_pred, state = self.apply.decode(params, state, None, z_q, is_training)
         result["x_pred"] = x_pred
-        print("result:",result)
-        print("result[x_pred] : ",result["x_pred"] )
         return result, state
 
     def loss(
